@@ -1,0 +1,139 @@
+%% 
+% Specifically for Quack 
+%%
+
+% These require amssymb 
+\newcommand{\EnterBlock}{\literal{\{}}
+\newcommand{\LeaveBlock}{\literal{\}}}
+\newcommand{\StmtEnd}{\literal{;}}
+\newcommand{\Block}[1]{{\EnterBlock{#1}\LeaveBlock}}
+
+\newcommand{\tbd}[1]{\par {\bf TBD:} #1\marginpar{\hfil TBD}}
+
+%%
+% From prior work 
+%%
+
+
+\newenvironment{bullets}%
+{\begin{list}{$\bullet$}{\setlength{\leftmargin}{1ex}%
+\setlength{\itemindent}{.5ex}}}%
+{\end{list}}
+
+% % s.t.
+% \newcommand{\st}{\mbox{\ s.t.\ }}
+
+% % implies
+% \newcommand{\implies}{\Rightarrow}
+% % otherwise
+% \newcommand{\ow}{\m{\rm otherwise}}
+
+% % if
+% \newcommand{\mif}{\m{\rm if\ }}
+
+% % Harpoons
+% \newcommand{\rh}{\rightharpoonup}
+% \newcommand{\lh}{\leftharpoonup}
+
+% % Denotational-semantics-style brackets and bottom:
+% \newcommand{\lbk}{\lbrack\!\lbrack}
+% \newcommand{\rbk}{\rbrack\!\rbrack}
+% \newcommand{\bottom}{\perp}
+
+% % Projection operator
+% \newcommand{\proj}{\!\downarrow\!}
+
+% % macros for use in alltt environments:
+% \newcommand {\lb}{\char123}
+% \newcommand {\rb}{\char125}
+% \newcommand {\braces}{\let\{=\lb\let\}=\rb}
+% \newcommand {\w}[1]{\textrm{\textit{#1}}}
+
+% % macros for mbox combined with another style
+% % (useful for changing typefaces in math mode)
+% \newcommand {\mboxbf}[1]{\mbox{{\bf #1}}}
+% \newcommand {\mboxit}[1]{\mbox{{\it #1}}}
+% \newcommand {\mboxtt}[1]{\mbox{{\braces\tt #1}}}
+% \newcommand {\mboxem}[1]{\mbox{{\em #1}}}
+% \newcommand {\m}[1]{\texttt{\braces{#1}}}
+% \newcommand {\ch}{\rm}
+	
+% macro for creating a binary operator
+%
+% example:  \makebinop{\makebinop{\mybmod}{mod}
+%	(duplicates the \bmod macro)
+%
+\def\makebinop#1#2{\def#1{\mskip-\medmuskip \mskip5mu
+\mathbin{\rm #2} \penalty900 \mskip5mu \mskip-\medmuskip}}
+
+\makebinop{\union}{\cup}
+
+\def\mathsc#1{\textsc{\scriptsize{#1}}}
+
+% Environments for theorems, lemmas, etc.
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{observation}[theorem]{Observation}
+\newtheorem{fact}{Fact}[theorem]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{constraint}[theorem]{Constraint}
+\newtheorem{axiom}[theorem]{Axiom}
+\newtheorem{law}[theorem]{Law}
+\newtheorem{algorithm}[theorem]{Algorithm}
+\newtheorem{invariant}[theorem]{Invariant}
+
+% Definition of the proof-environment:
+\newenvironment{proof}{{\bf Proof:}\quad}{$\Box$}
+
+\newcommand {\bigO}[1]{{\cal O}(#1)}
+
+\newcommand {\app}{\!\!:\!}
+\newcommand {\hastype}{::}
+\newcommand{\hast}{:}
+\newcommand{\qt}[1]{\mbox{``#1''}}
+\newcommand{\TexComment}[1]{}
+
+\newcommand{\dq}{\m{\tt "}}
+\newcommand{\flatqt}[1]{\m{\dq #1 \dq}}
+\newcommand{\seq}{\subseteq}
+\newcommand{\derives}{\vdash}
+
+\newcommand{\aset}[1]{\left\{{#1}\right\}}
+
+
+% macros for writing inference rules
+\newcommand{\infrule}[2]{\displaystyle{\displaystyle\strut{#1}} \over %
+                                        {\displaystyle\strut {#2}}}
+\newcommand{\cinfrule}[3]{\parbox{14cm}{\hfil$\infrule{#1}{#2}$\hfil}\parbox{4cm}{$\,#3$\hfil}}
+
+
+\newcommand{\kw}[1]{\m{\bf #1}}
+\newcommand{\nt}[1]{\m{\it #1}}
+\newcommand{\tm}[1]{\m{#1}}
+\newcommand{\s}{\;\,}
+
+% type joining (previously sqcup)
+\newcommand{\join}{\vee}
+
+\newcommand{\attr}[3]{#1:#2=#3}
+\newcommand{\classmap}[2]{class(#1) = (#2)}
+%\newcommand{\tcrule}[3]{\inferrule#3{#1}{#2}}}
+\newcommand{\tcrule}[3]{
+\vspace{1ex}
+\inference[ {#3} ]{#1}{#2} 
+\vspace{2ex}
+}
+\newcommand{\ossimple}[6]{C,#1,#2,#3\vdash #4 : #5,#6}
+\newcommand{\osXsimple}[7]{#1,#2,#3,#4\vdash #5 : #6,#7}
+% \newcommand{\osrule}[8]{\inferrule#8{#7}{\ossimple{#1}{#2}{#3}{#4}{#5}{#6}}}
+\newcommand{\osrule}[8]{
+   \hspace{-1in}
+   \inference[{\sc #8 }]{#7}{\ossimple{#1}{#2}{#3}{#4}{#5}{#6}}}
+
+
+\def\U#1{{\sf{}#1}}
+\def\S#1{{\tt{}#1}} % NB: we often use \verb+...+ for this also
+\def\C#1{{\tt{}#1}}
