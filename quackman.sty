@@ -8,7 +8,20 @@
 \newcommand{\StmtEnd}{\literal{;}}
 \newcommand{\Block}[1]{{\EnterBlock{#1}\LeaveBlock}}
 
+% macro for creating a binary operator
+%
+% example:  \makebinop{\makebinop{\mybmod}{mod}
+%	(duplicates the \bmod macro)
+%
+\def\makebinop#1#2{\def#1{\mskip-\medmuskip \mskip5mu
+\mathbin{\rm #2} \penalty900 \mskip5mu \mskip-\medmuskip}}
+
+\makebinop{\union}{\cup}
+\makebinop{\subtype}{<:}
+\makebinop{\supertype}{:>}
+
 \newcommand{\tbd}[1]{\par {\bf TBD:} #1\marginpar{\hfil TBD}}
+
 
 %%
 % From prior work 
@@ -58,15 +71,6 @@
 % \newcommand {\m}[1]{\texttt{\braces{#1}}}
 % \newcommand {\ch}{\rm}
 	
-% macro for creating a binary operator
-%
-% example:  \makebinop{\makebinop{\mybmod}{mod}
-%	(duplicates the \bmod macro)
-%
-\def\makebinop#1#2{\def#1{\mskip-\medmuskip \mskip5mu
-\mathbin{\rm #2} \penalty900 \mskip5mu \mskip-\medmuskip}}
-
-\makebinop{\union}{\cup}
 
 \def\mathsc#1{\textsc{\scriptsize{#1}}}
 

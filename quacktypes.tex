@@ -15,21 +15,17 @@
 
 \usepackage{url}
 \usepackage{graphicx}
-
 \usepackage{quackman}
 
-% Actual margin is 1.5 in + this number
-\topmargin -.3in
-
-% Text height:
-\textheight 8.7in
+\topmargin -.3in    % Actual margin is 1.5 in + this number
+\textheight 8.7in   % Text height:
 
 
 \begin{document}
 
 
 \title{Type Checking and Type Inference for Quack\\
-\small   Version 0.1, January 2017}
+\small   Version 0.2, October 2018}
 
 \author{Michal Young}
 \date{ }
@@ -69,8 +65,9 @@ inheritance. There are no `primitive', unboxed\footnote{We call a type
   ``unboxed'' types because they are not themselves objects.  
   A language with unboxed types may gain a performance advantage, 
   both because a primitive type requires less storage and because it
-  can often be allocated in the program stack, while objects must
-  almost always be allocated in the program heap.  This performance
+  can often be allocated in the program stack, while objects are
+  allocated in the program heap (always in Java, only sometimes in
+  C++).  This performance
   advantage comes at an expense in complexity for the programmer and
   for the compiler writer.}
  types as in Java.
@@ -79,8 +76,19 @@ Quack's \emph{Int} is like Java's \emph{Integer} and not like Java's
 
 The usual relation holds between the class hierarchy and the
 type hierarchy in Quack:  Every class is a type, and (almost) every type is a
-class. D extends C in the class hierarchy iff $D \le C$ in the type
-system.  The correspondence
+class. D extends C in the class hierarchy iff $D \subtype C$ in the type
+system.  The subtype relation is a partial order, which means it is
+reflexive, antisymmetric, and transitive.  For any types $A$, $B$, $C$
+
+\[ 
+\begin{array}{c@{~~~,~~~}c@{~~~,~~~}c}
+ \infrule{}{A \subtype A}  &
+ \infrule{A \subtype B, B \subtype C}{A \subtype C}  &
+  \infrule{A \subtype B, B \subtype A}{A = B} \\
+\end{array}
+\]
+
+The correspondence
   between types and classes is almost complete, but for purposes of
   the formal system we will introduce two special types that
   do not correspond to classes.  The special type $\top$ lies 
@@ -88,19 +96,30 @@ system.  The correspondence
   a type error.  The special type $\bot$ is at the bottom of the type
   hierarchy and is used in initialization of an analysis.
 
+\[ 
+\begin{array}{c@{~~~,~~~}c}
+ \infrule{}{A \subtype \top}  &
+  \infrule{}{\bot \subtype A}\\
+\end{array}
+\]
+
+
 There are no generics in Quack, neither through a template facility
 for user-defined generic classes, nor through built-in generic
-facilities like arrays in Java.  Quack also has no function types (i.e.,
+facilities like Java arrays.  Quack also has no function types (i.e.,
 functions are not first-class values), and no nested functions or
 inner classes.   All the hard stuff has been omitted. 
 
 Although the concrete syntax of Quack includes expressions, arithmetic
 expressions are syntactic sugar for method calls (e.g., $a+b$ is
 syntactic sugar for $a.\mbox{plus}(b)$).  This reduces the number of
-cases that must be accounted for in the type-check rules.  An
-exception is the boolean operations \emph{and}, \emph{or}, and
-\emph{not}, because interpreting these as method calls would not
-permit short-circuit evaluation.\footnote{This is a consequence of 
+cases that must be accounted for in the type-check rules.  
+
+Unlike arithmetic expressions involving '+', '-', '*', and '/', 
+the boolean operations \emph{and}, \emph{or}, and
+\emph{not} are not syntactic sugar for method calls. 
+Interpreting these as method calls would not
+permit short-circuit evaluation.  This is a consequence of 
 call-by-value semantics:  Actual arguments are evaluated before being
 passed to a method.   A method \emph{and} that took two arguments
 would  receive the already evaluated results of its left and
@@ -108,8 +127,13 @@ right-hand operands, and would not be able to prevent evaluating the
 right-hand operand if the left-hand operand was False. 
 For example, \texttt{ (not (x==0)) and (1/x < 5)} should 
 never cause a divide-by-zero error, but it could 
-if \emph{and} was a method.}
-\emph{Boolean}. 
+if \emph{and} was a method.\footnote{If you are using Haskell, you may
+  permit yourself a moment of gloating because it is perfectly
+  possible in a \emph{lazy} language to define functions that are
+  \emph{non-strict}, that is, functions that evaluate arguments only
+  if and when their value is actually used.  However, adding laziness
+  to Quack would cost us a good deal in other complexity.}
+
 
 \subsection{Explicit type declarations}
 
@@ -132,13 +156,18 @@ a_square: Rect = Square( Pt(3,3), 5 );
 \end{verbatim}
 
 Where explicit type declarations appear, they determine the types of
-the variables they name.  
+the variables they name.  In the type inference procedure described
+below, we will treat type declarations as if they appeared separately
+from the assignment statement. 
 
 \subsection{Instance variables}
 
-Instance variables are introduced by assignment in the constructor part
+Instance variables (also called `data members' or `fields' of an
+object)  are introduced by assignment in the constructor part
 of a class declaration.  There is no separate variable declaration,
-nor explicit indicator of the type.  Rather, the static type of the
+nor explicit indicator of the type, although an explicit type may be
+included in an assignment to an instance variable just as in other
+assignments.  The static type of the
 instance variable is 
 inferred from the expression whose value is assigned to it.  Consider: 
 
@@ -154,6 +183,20 @@ formal argument ll has (declared) static type Pt.  Instance variable
 ur has static type Pt because the constructor for class Pt returns 
 a Pt object. 
 
+If an explicit type declaration is included in an assignment, it
+determines the static type.  If the declared type is the same as the
+inferred type, it has no effect.  If the inferred type is not a
+subtype of the declared type, a type error is reported.   For example: 
+
+\begin{verbatim}
+class Square(ll: Pt, side: Int) extends Rect {
+  this.ll: Obj = ll;   // OK, Pt <: Obj
+  this.ur = Pt(this.ll._x() + side, this.ll._y() + side);
+  // Error:  No method _x() in class Obj
+}
+\end{verbatim}
+
+
 Control flow is possible in a constructor.   The set of instance
 variables defined in the constructor must be independent of 
 the control flow.  That is, the following is \emph{not} permitted: 
@@ -168,7 +211,7 @@ class Schroedinger(box: Int) {
 }
 \end{verbatim}
 
-However, the following is permitted: 
+\noindent However, the following is permitted: 
 
 \begin{verbatim}
 class Schroedinger(box: Int) {
@@ -182,7 +225,7 @@ class Schroedinger(box: Int) {
 
 In the second version, while the value of this.living depends on
 control flow, it has been initialized with and has static (and
-dynamic) type Int in either case.   But this then raises a question
+dynamic) type Boolean in either case.   But this then raises a question
 as to whether the following is permitted, and if so what types should
 be inferred: 
 
@@ -257,8 +300,9 @@ class SmartRobot(iq: Int) extends Robot {
 \end{verbatim}
 
 This rule is necessary because the inherited method
-\verb|destroy_city| might use its strength, and 
-while imprisoned method \verb|Int.PLUS| might be applied to its age. 
+\verb|destroy_city| might use its strength, and method \verb|Int.PLUS|
+might be applied to its age 
+while our robot is imprisoned . 
 
 \subsection{Method Signatures}
 
@@ -326,7 +370,7 @@ toString  method in Java.
 
 PLUS is not inherited from a built-in
 class, but any class may define a PLUS method to take advantage of
-syntax for the arithmetic operator $+$. \verb|x + y| is syntactic
+syntax for the arithmetic operator $+$. \ \verb|x + y| is syntactic
 sugar for \verb|x.PLUS(y)|.  If a compatible PLUS method does not
 exist for the static type of x, the Quack compiler will report an
 error, just as if the programmer had written \verb|x.PLUS(y)|
@@ -344,7 +388,7 @@ explicitly.
       \( a_{\mbox{inherited}} \) 
     of the method it
     overrides, 
-   \( a_{\mbox{inherited}} \le a \)  (the overriding method must
+   \( a_{\mbox{inherited}} \subtype a \)  (the overriding method must
     accept at least everything the inherited method would have
     accepted, if it had not been overridden).  
    \item The type $r$ returned by the overriding method must 
@@ -364,7 +408,7 @@ before it is used on every execution path.
 
 \subsubsection{Initialization before use}
 
- More precisely, a variable
+A variable
 must be initialized before it is used on every \emph{syntactic}
 execution path.  The following is not permitted: 
 
@@ -374,10 +418,10 @@ execution path.  The following is not permitted:
       n_reps = 3;
       while rep < n_reps {
           if rep > 0 {
-	     x = y;     // Error here
-	   }
-	   rep = rep + 1;
-	   y = 42;
+              x = y;     // Error here
+           }
+           rep = rep + 1;
+           y = 42;
       }
    }
 \end{verbatim}
@@ -408,14 +452,14 @@ static type of that variable.  That is because we will use the static
 type to determine what methods may be called on objects held by that
 variable.  Really bad things would happen if we called x.foo(1, "yup" ) on
 an object that does not have a foo method that takes an integer and
-string as arguments.  In a dynamically typed language, we check for
-this problem every time a method is called, and fail gracefully
+string as arguments.  In a dynamically typed language, we check
+consistency every time a method is called, and fail gracefully
 (perhaps by crashing the program) if there is no such method.  In a
 statically typed language, we do not make that check at
 run-time.\footnote{Mostly we do not make that check at run-time.
   Some statically typed languages make a dynamic type check in a few
   places where their static type system cannot ensure consistency.
-  For example, Java makes a dynamic type check when you cost an Object
+  For example, Java makes a dynamic type check when you cast an Object
   value to something more specific, and when you access an element of
   an array. The restrictions in Quack, including lack of built-in or
   user-defined generic collections, make it unnecessary for us to make
@@ -444,7 +488,7 @@ be to find as precise an approximation as possible, while still being
 safe. 
 
 In terms of the class hierarchy and the corresponding hierarchy of
-types, we want to find an approximate type that is an ancestor of all
+types, we want to find an approximate type that is a supertype of all
 the types of all the values that a variable may hold at run-time, but
 no higher in the hiearchy than necessary.  
 
@@ -453,7 +497,7 @@ no higher in the hiearchy than necessary.
 To find the best approximation for the set of actual object types a
 variable may hold at run time, we can imagine an alternative way of
 executing the program in which, instead of holding actual values,
-variable hold just indicators of the types of objects.  If we did
+variables hold just indicators of the types of objects.  If we did
 this, we would not be able to determine whether the true branch or the
 false branch should be taken by an if statement, nor how many times a
 loop executes, so we would need to consider all syntactic paths (as we
@@ -482,7 +526,27 @@ This would be enough to define a sound but reasonably precise
 approximation to use as the static type of a local variable:  We could
 enumerate all the possible types of all the objects assigned to a
 variable on every syntactically legal path, and find their least
-common ancestor in the class hiearchy. It's a start. 
+common ancestor in the class hiearchy. 
+It's a start. 
+
+\subsubsection{A Note on Modular Checking}
+
+Note that Quack requires explicit type declarations on method
+arguments (including constructor arguments) and on the return type of
+a method.  This is so that, whether we are using the collecting
+semantics or a more practical abstract semantics introduced below, we
+never have to actually execute a method call.  We can just use the
+method signature of the current method to determine the types of
+arguments passed to the current method, and we can use the signature
+of called methods to determine whether the method call is legal and 
+what type of value it will return.  Instance variables are fixed by
+the constructor for the same reason:  We must analyze the constructor
+before we analyze other methods in a class, but after that we can
+consider each method independently, without worrying about how types
+in one affect types in another.    The requirements for explicit
+declarations in Quack are there to permit you to perform type
+inference and type checking in a modular fashion, one method at a
+time. 
 
 \subsubsection{Execution steps and states}
 
@@ -539,23 +603,32 @@ complete the type inference, but must report the potential error
 instead.  Formally we could define a special \( \top \) and give the
 expression that type, but if we continue with type inference with this
 ``error'' type we will soon generate a large number of annoying error
-messages; it is typically best to give up while we're ahead. 
+messages; it is likely best to give up while we're ahead.  
 
 \paragraph{Uninitialized variables.}
 What if one or more of the the variables $z$ or $a_i$ has an empty set
 of possible types?  We can ensure this never happens.  Recall that
-Quack has a separate rule that requiring that every variable is
+Quack has a separate rule that requires every variable to be 
 initialized before it is used  on every syntactic program path.  As
 long as we consider expressions in some order that corresponds to a
 potential execution path, we are assured that each variable we use in
-type inference is mapped to a non-emtpy set of possible types. 
+type inference is mapped to a non-emtpy set of possible types.  The
+lexical order in which statements appear in the program may not
+correspond to any possible execution order  (for example, statements
+in the 'else' branch of an 'if' statement cannot actually be executed 
+immediately after statements in the 'then' branch), but it is also certain to
+be an acceptable order for purposes of type inference.  
 
 \paragraph{Boolean expressions.}
 Boolean operations \emph{and}, \emph{or}, and \emph{not} are not
 syntactic sugar for method calls, but for the purpose of type checking
 and type inference we can treat them as if they were.  Short circuit
 evaluation is irrelevant to type checking, so we can pretend that
-these operations are shorthand for methods of class Boolean.  We'll
+these operations are shorthand for methods of class
+Boolean\footnote{Treating these boolean connectives as method calls is
+  useful for explanation, but in your implementation it may be simpler
+  to just implement the type checking for these connectives directly.}
+We'll
 use names that are illegal in Quack so that it is impossible for them
 to conflict with any method names that a Quack programmer could
 create: 
@@ -663,7 +736,7 @@ what Quack or other statically typed languages do.  By ``static'' we
 mean that the types are determined at compile time, so we need to know
 whether \( a < b \) is a numeric comparison or a string comparison.
 The common ancestor of \emph{Int} and \emph{String} in the type
-hierarchy is \emph{Object}, and \emph{Object} has no method
+hierarchy is \emph{Obj}, and \emph{Obj} has no method
 corresponding to the $<$ comparison operation.  
 
 \begin{figure}
@@ -673,7 +746,7 @@ corresponding to the $<$ comparison operation.
 \label{fig-set-lattice}
 \end{figure}
 
-\subsection{An abstract semantics}
+\subsection{An Abstract Semantics}
 
 The collecting semantics is a little unwieldy, and it is also clumsy
 to find a fixed point solution on sets of types, and then take the least
@@ -737,8 +810,105 @@ methods in the class is sometimes called the \emph{vtable}, because in
 C++ the methods in that table are called ``virtual functions'' or
 ``virtual methods.''  
 
-\paragraph{Or did we?}  On the other hand, consider this small variation on
-the program above. 
+\subsection{Putting it Together: Implementing Type Checking}
+
+The abstract semantics above is the one you should implement.  You
+will need an actual representation of the subtype hierarchy for all
+the subtypes of \emph{Obj}.  The $\top$ and $\bot$ elements can be
+implicit (which simplifies matters since the rest of the hierarchy is
+a simple tree that can be represented by a table).  
+
+You will want to create a table that maps from variables visible in a
+method to the types of those variables.  Initially the arguments to
+the method have their declared types, and all other variables have
+type $\bot$.   
+
+In pseudocode, the logic of the main type inference loop for a single 
+method in Quack is roughly this, if 
+\begin{verbatim}
+  changed = true;
+  while changed {
+       changed = false;
+       for each statement, in lexical order {
+           type check the statement
+       }
+  }
+\end{verbatim}
+
+Of course I've hidden some complexity in the ``type check the
+statement'' step.  Really it's not so complex, but each kind of Quack
+statement and expression can require its own code.  We handle the type
+of an expression exactly as we would do for the collecting semantics,
+except that now we don't have to deal with sets of possible types, but
+just with the current estimate of a type.  
+
+For assignment statements, we don't just replace current type estimate
+for a variable.  Rather, if we have previously estimated the type of a
+variable to be T, and we now we are assigning type Q to that variable,
+the new type is the \emph{least common supertype} of Q and T (i.e.,
+their nearest ancestor in the tree).  Often, but not always, that will
+be either Q or T.  Note that our estimate may ``move up'' the tree but
+never down or across; and since the tree is finite,   this is our
+guarantee that type inference will 
+terminate.   If this results in a new type estimate for the variable,
+we set the `changed' flag that controls the outer loop in the
+pseudocode above. 
+
+What if the assignment statement has a declared type, like 
+\begin{verbatim}
+x: Int = a + b;
+\end{verbatim}
+
+After
+inferring a type for $a+b$, , we check that the inferred type is a subtype
+(possibly equal).  If not, we report a type error.   Then we set the
+estimated type to the declared type (even if it is a proper supertype
+of the inferred type).  
+
+\paragraph{Other statements.}
+Besides assignments, Quack has while loops, if statements, return
+statements, raw expressions, and typecase statements. 
+
+\begin{itemize}
+\item For while loops, we check that the condition evaluates to
+  Boolean, and then we type check each statement in the body of the
+  loop in the normal way. 
+\item For if statements, we check that the condition evaluates to
+  Boolean, and then we type check each statement in the true branch
+  and the false branch. 
+\item For return statements, we check that the expression evaluates to
+  a some subtype of the method return type.   (In some cases this will
+  be ``Nothing''.) 
+\item For an expression that appears by itself, we calculate the type
+  of the expression (because we might find a type error in the
+  evaluation) and then discard it. 
+\item Typecase is the most complex of the cases, and is considered
+  brelow. 
+\end{itemize}
+
+\paragraph{Typecase}
+
+A typecase statement is used to choose different code depending on the
+dynamic type of an object, which may be a proper subtype of the static type of
+the variable that holds it.   Consider: 
+\begin{verbatim}
+  def  EQUAL(other: Obj) : Boolean {
+       typecase other {
+         pt: Pt {  return this.x == pt.x and this.y == pt.y; }
+       }
+       return false;
+  }
+\end{verbatim}
+
+We evaluate the typecase expression (\emph{other} in this example) and
+discard the result; we only care that it it can be evaluated without a
+type error.  Then, for each case (of which this example has only one),
+we introduce a variable (like \emph{pt}) with the declared type
+(\emph{Pt} in this case), and type check the statements within that
+branch of the typecase in the augmented environment.  (Note that the
+scope of the introduced variable is only for that branch of the
+typecase.) 
+           
 
 
 \end{document}
