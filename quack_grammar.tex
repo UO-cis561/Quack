@@ -602,7 +602,7 @@ are references to objects.
 \nonterminal{Statement} & 
    \nonterminal{L\_Expr} 
    \optional{\literal{:} \terminal{ident}} 
-   \literal{=} \nonterminal{R\_Exp} \StmtEnd
+   \literal{=} \nonterminal{R\_Expr} \StmtEnd
 \end{grammar}
 
 A left-hand expression (that is, designation of a location in which to
@@ -610,9 +610,9 @@ store a value) is often just an identifier, but sometimes it is the
 location of a field of an object.  
 
 \begin{grammar}
-\nonterminal{L\_Expression} & \terminal{ident}\\
-\nonterminal{L\_Expression} &
-    \nonterminal{R\_Exp} \literal{.} \terminal{ident}\\
+\nonterminal{L\_Expr} & \terminal{ident}\\
+\nonterminal{L\_Expr} &
+    \nonterminal{R\_Expr} \literal{.} \terminal{ident}\\
 \end{grammar}
 
 It may appear surprising that a right-hand expression, evaluated for
@@ -633,7 +633,7 @@ make sense if evaluaton of a method  has an \emph{effect} as well
 as a \emph{value}.  
 
 \begin{grammar}
-\nonterminal{Statement} &  \nonterminal{R\_Exp} \StmtEnd
+\nonterminal{Statement} &  \nonterminal{R\_Expr} \StmtEnd
 \end{grammar}
 
 I think allowing all bare expressions as statements is probably a bad
@@ -866,7 +866,7 @@ method invoked when we use the \verb|==| operation.  Our first attempt
 might look like this: 
 
 \begin{verbatim}
-def EQUAL(other: Pt) {
+def EQUALS(other: Pt) {
     return this.x == other.x and this.y == other.y;
 }
 \end{verbatim}
@@ -878,7 +878,7 @@ argument must not be more restrictive than \emph{Obj}.  This is the
 We might try to fix the problem this way: 
 
 \begin{verbatim}
-def EQUAL(other: Obj): Boolean {
+def EQUALS(other: Obj): Boolean {
     return this.x == other.x and this.y == other.y;
 }
 \end{verbatim}
@@ -890,7 +890,7 @@ dynamic cast and then check to see whether the result is null.  In
 Quack we use a typecase: 
 
 \begin{verbatim}
-def EQUAL(other: Obj): Boolean {
+def EQUALS(other: Obj): Boolean {
     typecase other {
        pt: Point { return this.x == pt.x and this.y == pt.y; }
        thing: Obj { return false; }
@@ -901,7 +901,7 @@ def EQUAL(other: Obj): Boolean {
 We could also have written
 
 \begin{verbatim}
-def EQUAL(other: Obj): Boolean {
+def EQUALS(other: Obj): Boolean {
     typecase other {
        pt: Point { return this.x == pt.x and this.y == pt.y; }
     }
