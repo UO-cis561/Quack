@@ -602,7 +602,7 @@ are references to objects.
 \nonterminal{Statement} & 
    \nonterminal{L\_Expr} 
    \optional{\literal{:} \terminal{ident}} 
-   \literal{=} \nonterminal{R\_Exp} \StmtEnd
+   \literal{=} \nonterminal{R\_Expr} \StmtEnd
 \end{grammar}
 
 A left-hand expression (that is, designation of a location in which to
@@ -612,7 +612,7 @@ location of a field of an object.
 \begin{grammar}
 \nonterminal{L\_Expr} & \terminal{ident}\\
 \nonterminal{L\_Expr} &
-    \nonterminal{R\_Exp} \literal{.} \terminal{ident}\\
+    \nonterminal{R\_Expr} \literal{.} \terminal{ident}\\
 \end{grammar}
 
 It may appear surprising that a right-hand expression, evaluated for
@@ -633,7 +633,7 @@ make sense if evaluaton of a method  has an \emph{effect} as well
 as a \emph{value}.  
 
 \begin{grammar}
-\nonterminal{Statement} &  \nonterminal{R\_Exp} \StmtEnd
+\nonterminal{Statement} &  \nonterminal{R\_Expr} \StmtEnd
 \end{grammar}
 
 I think allowing all bare expressions as statements is probably a bad
