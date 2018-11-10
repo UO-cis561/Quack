@@ -866,7 +866,7 @@ method invoked when we use the \verb|==| operation.  Our first attempt
 might look like this: 
 
 \begin{verbatim}
-def EQUAL(other: Pt) {
+def EQUALS(other: Pt) {
     return this.x == other.x and this.y == other.y;
 }
 \end{verbatim}
@@ -878,7 +878,7 @@ argument must not be more restrictive than \emph{Obj}.  This is the
 We might try to fix the problem this way: 
 
 \begin{verbatim}
-def EQUAL(other: Obj): Boolean {
+def EQUALS(other: Obj): Boolean {
     return this.x == other.x and this.y == other.y;
 }
 \end{verbatim}
@@ -890,7 +890,7 @@ dynamic cast and then check to see whether the result is null.  In
 Quack we use a typecase: 
 
 \begin{verbatim}
-def EQUAL(other: Obj): Boolean {
+def EQUALS(other: Obj): Boolean {
     typecase other {
        pt: Point { return this.x == pt.x and this.y == pt.y; }
        thing: Obj { return false; }
@@ -901,7 +901,7 @@ def EQUAL(other: Obj): Boolean {
 We could also have written
 
 \begin{verbatim}
-def EQUAL(other: Obj): Boolean {
+def EQUALS(other: Obj): Boolean {
     typecase other {
        pt: Point { return this.x == pt.x and this.y == pt.y; }
     }
